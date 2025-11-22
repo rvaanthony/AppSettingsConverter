@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Test
+      run: dotnet test --configuration Release --no-build --verbosity normal
+    
+    - name: Create Release Archive
+      run: |
+        mkdir -p release
+        dotnet publish AppSettingsConverter/AppSettingsConverter.csproj -c Release -o release/AppSettingsConverter --self-contained false
+        tar -czf AppSettingsConverter-linux-x64.tar.gz -C release AppSettingsConverter
+        zip -r AppSettingsConverter-linux-x64.zip release/AppSettingsConverter
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          AppSettingsConverter-linux-x64.tar.gz
+          AppSettingsConverter-linux-x64.zip
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

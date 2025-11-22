@@ -1,31 +1,64 @@
 # AppSettingsConverter
 
-`AppSettingsConverter` is a .NET console application that reads a JSON configuration file, flattens its contents, and outputs the flattened configuration in a specific format.
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/github/license/yourusername/AppSettingsConverter)](LICENSE.txt)
+
+A powerful .NET console application that flattens JSON configuration files (like `appsettings.json`) into Azure App Service configuration format. Perfect for converting nested JSON configurations into flat key-value pairs with customizable delimiters.
+
+## Features
+
+- ✅ Flattens nested JSON configurations into flat key-value pairs
+- ✅ Supports custom delimiters (e.g., `__`, `:`, or any string)
+- ✅ Handles arrays, objects, and all JSON value types
+- ✅ Proper JSON escaping for values containing special characters
+- ✅ Multiple output formats (formatted lines or JSON array)
+- ✅ Output to file or stdout
+- ✅ Comprehensive error handling with exit codes
+- ✅ Cross-platform (.NET 10.0)
+
+## Installation
+
+### Prerequisites
+
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download) or later
+
+### Build from Source
+
+```bash
+git clone https://github.com/yourusername/AppSettingsConverter.git
+cd AppSettingsConverter
+dotnet build
+```
+
+### Run Directly
+
+```bash
+dotnet run -- <path_to_json_file> <delimiter>
+```
 
 ## Usage
 
-To use the `AppSettingsConverter` application, follow these steps:
+### Basic Usage
 
-1. Open a command prompt or terminal window.
+```bash
+AppSettingsConverter <path_to_json_file> <delimiter>
+```
 
-2. Navigate to the directory where the `AppSettingsConverter.exe` is located.
+**Arguments:**
+- `<path_to_json_file>` - Path to the JSON configuration file to flatten
+- `<delimiter>` - Delimiter to use for flattening (e.g., `__` or `:`)
 
-3. Run the application with the following command-line arguments:
+**Options:**
+- `--output <file>` - Output file path (default: stdout)
+- `--format json` - Output as JSON array (default: formatted lines)
+- `--help` - Show help message
 
-   ```
-   AppSettingsConverter.exe <path_to_json_file> <delimiter>
-   ```
+### Examples
 
-   Replace `<path_to_json_file>` with the file path to the JSON configuration file that you want to flatten.
+#### Example 1: Basic Flattening
 
-   Replace `<delimiter>` with the delimiter you want to use for flattening. The delimiter can be either `__` or `:`.
-
-4. The application will process the JSON configuration file, flatten its contents, and output the flattened configuration in the specified format.
-
-## Example
-
-Suppose we have a JSON configuration file named `appsettings.json` with the following content:
-
+Input file (`appsettings.json`):
 ```json
 {
   "ApiUrl": "www.api.com",
@@ -41,53 +74,132 @@ Suppose we have a JSON configuration file named `appsettings.json` with the foll
 }
 ```
 
-To flatten the configuration using `__` as the delimiter, we can run the following command:
-
+Command:
+```bash
+AppSettingsConverter appsettings.json __
 ```
-AppSettingsConverter.exe appsettings.json __
+
+Output:
+```
+  {
+     "name": "ApiUrl",
+     "value": "www.api.com",
+     "slotSetting": false
+  },
+  {
+     "name": "Emails__Admin",
+     "value": "admin@admin.com",
+     "slotSetting": false
+  },
+  {
+     "name": "Logging__LogLevel__Default",
+     "value": "Information",
+     "slotSetting": false
+  },
+  {
+     "name": "Logging__LogLevel__Microsoft.AspNetCore",
+     "value": "Warning",
+     "slotSetting": false
+  }
 ```
 
-The output will be:
+#### Example 2: Output to File
 
+```bash
+AppSettingsConverter appsettings.json __ --output flattened.json
+```
+
+#### Example 3: JSON Array Output
+
+```bash
+AppSettingsConverter appsettings.json __ --format json
+```
+
+Output:
 ```json
-{
-   "name": "ApiUrl",
-   "value": "www.api.com",
-   "slotSetting": false
-},
-{
-   "name": "Emails__Admin",
-   "value": "admin@admin.com",
-   "slotSetting": false
-},
-{
-   "name": "Logging__LogLevel__Default",
-   "value": "Information",
-   "slotSetting": false
-},
-{
-   "name": "Logging__LogLevel__Microsoft.AspNetCore",
-   "value": "Warning",
-   "slotSetting": false
-}
+[
+  {
+    "Name": "ApiUrl",
+    "Value": "www.api.com",
+    "SlotSetting": false
+  },
+  {
+    "Name": "Emails__Admin",
+    "Value": "admin@admin.com",
+    "SlotSetting": false
+  }
+]
 ```
 
-## Note
+#### Example 4: Using Colon Delimiter
 
-- Ensure that the JSON configuration file is accessible and in the correct format.
+```bash
+AppSettingsConverter appsettings.json :
+```
 
-- The application will display an error message if the file is not found or if there are issues with the JSON format.
+## Exit Codes
 
-- The `slotSetting` property in the output will always be `false` in this version of the application. Modify the code to set it based on your requirements.
+The application returns the following exit codes:
 
-- The application uses `System.Text.Json` for parsing the JSON. Ensure that you have the appropriate .NET runtime installed on your system.
+- `0` - Success
+- `1` - Invalid arguments
+- `2` - File not found
+- `3` - JSON parse error
+- `4` - Invalid delimiter
+- `5` - File read/write error
 
-- Feel free to modify the output format or customize the code to suit your specific needs.
+## Supported JSON Types
+
+The converter handles all JSON value types:
+
+- **Objects** - Flattened with delimiter-separated keys
+- **Arrays** - Flattened with numeric indices (e.g., `Items__0`, `Items__1`)
+- **Strings** - Preserved with proper escaping
+- **Numbers** - Converted to string representation
+- **Booleans** - Converted to `true`/`false` strings
+- **Null** - Converted to empty string
+
+## Use Cases
+
+- **Azure App Service Configuration** - Convert `appsettings.json` to Azure App Service application settings format
+- **Environment Variables** - Generate environment variable format from JSON configuration
+- **Configuration Migration** - Migrate nested configurations to flat key-value stores
+- **CI/CD Pipelines** - Automate configuration transformation in build pipelines
+
+## Docker
+
+You can also run AppSettingsConverter using Docker:
+
+```bash
+# Build the image
+docker build -t appsettingsconverter .
+
+# Run with a JSON file
+docker run --rm -v $(pwd):/data appsettingsconverter /data/appsettings.json __
+
+# Or with output to file
+docker run --rm -v $(pwd):/data appsettingsconverter /data/appsettings.json __ --output /data/output.json
+```
+
+## Examples
+
+Example JSON files are available in the [`examples`](examples/) directory:
+- [`appsettings.json`](examples/appsettings.json) - Sample input file
+- [`appsettings.expected.json`](examples/appsettings.expected.json) - Expected output format
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
+
+## Acknowledgments
+
+- Built with [.NET](https://dotnet.microsoft.com/)
+- Uses [System.Text.Json](https://docs.microsoft.com/en-us/dotnet/api/system.text.json) for JSON parsing
 
 ---
 
-Feel free to customize the README with any additional information or instructions as per your needs.
+**Made with ❤️ for the .NET community**
